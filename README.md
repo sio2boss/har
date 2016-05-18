@@ -3,14 +3,21 @@ har
 
 From the Swedish verb 'to have'.  Download the url and unpack it if necessary.
 
-## Building / Installing ##
+## Quick Install Instructinos ##
+
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh)"
+
+## Building ##
 
     make
-    make install
 
 ## Testing ##
 
     make test
+
+## Installing ##
+
+    make install
 
 ## Usage ##
 
