@@ -1,39 +1,46 @@
 package main
 
 import (
-	"fmt"
+	"github.com/Sirupsen/logrus"
+	"github.com/docopt/docopt-go"
+	"gopkg.in/cheggaaa/pb.v1"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
-	"github.com/docopt/docopt-go"
-	"gopkg.in/cheggaaa/pb.v1"
 )
+
+var log = logrus.New()
+
+func init() {
+	log.Formatter = new(logrus.TextFormatter)
+	log.Level = logrus.DebugLevel
+}
 
 func downloadFromUrl(output_path string, url string) string {
 
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
 
-	fmt.Println("Downloading", url)
+	log.Info("Downloading", url)
 
 	// Check file existence first
 	if _, err := os.Stat(fileName); os.IsExist(err) {
-		fmt.Println("File you requested to download already exists")
+		log.Info("File you requested to download already exists")
 		return ""
 	}
 
 	output, err := os.Create(fileName)
 	if err != nil {
-		fmt.Println("Error while creating", fileName, "-", err)
+		log.Info("Error while creating", fileName, "-", err)
 		return ""
 	}
 	defer output.Close()
 
 	response, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error while downloading", url, "-", err)
+		log.Info("Error while downloading", url, "-", err)
 		return ""
 	}
 	defer response.Body.Close()
@@ -47,12 +54,12 @@ func downloadFromUrl(output_path string, url string) string {
 	n, err := io.Copy(output, reader)
 	if err != nil {
 		bar.Finish()
-		fmt.Println("Error while downloading", url, "-", err)
+		log.Info("Error while downloading", url, "-", err)
 		return ""
 	}
 	bar.Finish()
 
-	fmt.Println(n, "bytes downloaded.")
+	log.Info(n, "bytes downloaded.")
 
 	return fileName
 }
@@ -63,20 +70,20 @@ func getSystemCommandFromFilename(filename string) (string, string) {
 
 	switch parts[len(parts)-1] {
 	case "zip":
-		return "unzip", "";
+		return "unzip", ""
 	case "tgz":
-		return "tar", "xvfz";
+		return "tar", "xvfz"
 	case "gz":
 		if parts[len(parts)-2] != "tar" {
 			return "gunzip", ""
 		}
-		return "tar", "xvfz";
+		return "tar", "xvfz"
 	case "bz2":
-		return "tar", "xvfj";
+		return "tar", "xvfj"
 	case "tar":
-		return "tar", "xvf";
+		return "tar", "xvf"
 	default:
-		return "", "";
+		return "", ""
 	}
 }
 
@@ -91,24 +98,24 @@ func extractDownloadedFile(filename string) {
 	cmd := exec.Command(extract_command, extract_args, filename)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Unable to extract file due to error: %s\n", err)
+		log.Info("Unable to extract file due to error: %s\n", err)
 		return
 	}
 }
-
 
 func removeDownloadedFile(filename string) {
 
 	cmd := exec.Command("rm", "-f", filename)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Unable to remove file due to error: %s\n", err)
+		log.Info("Unable to remove file due to error: %s\n", err)
 	}
 }
 
 func main() {
 
-	usage := `Har.
+	usage := `Har, from the Swedish verb 'to have'.  Download the url and
+unpack it if necessary.
 
 Usage:
   har [--output=<dir>] <url>
@@ -133,10 +140,4 @@ Options:
 		removeDownloadedFile(filename)
 	}
 
-	// countries := []string{"GB", "FR", "ES", "DE", "CN", "CA", "ID", "US"}
-
-	//for i := 0; i < len(countries); i++ {
-	//	url := "http://download.geonames.org/export/dump/" + countries[i] + ".zip"
-	//	downloadFromUrl(url)
-	//}
 }
