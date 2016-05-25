@@ -18,10 +18,14 @@ func init() {
 	log.Level = logrus.DebugLevel
 }
 
+func getFilenameFromUrl(url string) string {
+	tokens := strings.Split(url, "/")
+	return tokens[len(tokens)-1]
+}
+
 func downloadFromUrl(output_path string, url string) string {
 
-	tokens := strings.Split(url, "/")
-	fileName := tokens[len(tokens)-1]
+	fileName := getFilenameFromUrl(url)
 
 	log.Info("Downloading", url)
 
@@ -82,6 +86,8 @@ func getSystemCommandFromFilename(filename string) (string, string) {
 		return "tar", "xvfj"
 	case "tar":
 		return "tar", "xvf"
+	case "git":
+		return "git", "clone"
 	default:
 		return "", ""
 	}
@@ -133,11 +139,27 @@ Options:
 	url, _ := arguments["<url>"].(string)
 	output_path, _ := arguments["--output"].(string)
 
-	filename := downloadFromUrl(output_path, url)
+	extract_command, extract_args := getSystemCommandFromFilename(getFilenameFromUrl(url))
+	if (extract_command == "git") {
 
-	if filename != "" {
-		extractDownloadedFile(filename)
-		removeDownloadedFile(filename)
+		// Git clone
+		cmd := exec.Command(extract_command, extract_args, url)
+		log.Debug(cmd)
+		err := cmd.Run()
+		if err != nil {
+			log.Info("Unable to git clone file due to error: %s\n", err)
+		}
+
+	} else {
+
+		// Download and extract
+		filename := downloadFromUrl(output_path, url)
+
+		if filename != "" {
+			extractDownloadedFile(filename)
+			removeDownloadedFile(filename)
+		}
+
 	}
 
 }

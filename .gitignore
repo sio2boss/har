@@ -32,4 +32,5 @@ fabric.properties
 # go stuff
 bin
 pkg
+src
 release
