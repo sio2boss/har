@@ -14,32 +14,32 @@ release: arm arm64 mac64 linux64 win64
 
 arm:
 	mkdir -p release
-	env GOOS=linux GOARCH=arm go build -v github.com/sio2boss/har
-	tar cvfz release/har-v0.1.0-arm.tar.gz har
+	env GOOS=linux GOARCH=arm go build
+	tar cvfz release/har-v0.1.1-arm.tar.gz har
 	rm -f har
 
 arm64:
 	mkdir -p release
-	env GOOS=linux GOARCH=arm64 go build -v github.com/sio2boss/har
-	tar cvfz release/har-v0.1.0-goarm64.tar.gz har
+	env GOOS=linux GOARCH=arm64 go build
+	tar cvfz release/har-v0.1.1-arm64.tar.gz har
 	rm -f har
 
 mac64:
 	mkdir -p release
-	env GOOS=darwin GOARCH=amd64 go build -v github.com/sio2boss/har
-	tar cvfz release/har-v0.1.0-mac64.tar.gz har
+	env GOOS=darwin GOARCH=amd64 go build
+	tar cvfz release/har-v0.1.1-mac64.tar.gz har
 	rm -f har
 
 linux64:
 	mkdir -p release
-	env GOOS=linux GOARCH=amd64 go build -v github.com/sio2boss/har
-	tar cvfz release/har-v0.1.0-linux64.tar.gz har
+	env GOOS=linux GOARCH=amd64 go build
+	tar cvfz release/har-v0.1.1-linux64.tar.gz har
 	rm -f har
 
 win64:
 	mkdir -p release
-	env GOOS=windows GOARCH=amd64 go build -v github.com/sio2boss/har
-	zip release/har-v0.1.0-win64.zip har.exe
+	env GOOS=windows GOARCH=amd64 go build
+	zip release/har-v0.1.1-win64.zip har.exe
 	rm -f har.exe
 
 test:
