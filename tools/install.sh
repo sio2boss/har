@@ -28,8 +28,8 @@ case $OS in
   *) ;;
 esac
 
-echo "https://github.com/sio2boss/har/releases/download/v0.1.0/har-${VERSION}-${OSARCH}.${FORMAT}"
-curl -o /tmp/har.${FORMAT} -fsSL https://github.com/sio2boss/har/releases/download/v0.1.0/har-${VERSION}-${OSARCH}.${FORMAT}
+echo "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}"
+curl -o /tmp/har.${FORMAT} -fsSL https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}
 
 if [ -e /tmp/har.${FORMAT} ]; then
     rm -f /usr/local/bin/har && cd /usr/local/bin/ && tar xfz /tmp/har.${FORMAT} && rm /tmp/har.${FORMAT} && echo "done"
