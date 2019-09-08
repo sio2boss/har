@@ -1,27 +1,54 @@
 har
 ===
 
-From the Swedish verb 'to have'.  Download the url and unpack it if necessary.
+From the Swedish verb 'to have'.  We as developers and end users often download some file and then do some operation like extract it or install it or run it.  Har's goal is to just do all that from a single tool.  If you look at say a Dockerfile or Ansible or a Bash shell script, most of them have to figure out what compression was used and/or keep track of the filename used.  These are core problems we will address.
 
-## Quick Install Instructinos ##
+## Quick Install Instructions
+
+This is the best way other folks on github have figured out how to download a golang based binary and install it.
 
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh)"
 
-## Building ##
+or if you already have har installed and want the update
 
-    make
+    har i -y https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
 
-## Testing ##
+## Modes
 
-    make test
+| Mode | Description                                        |
+|------|----------------------------------------------------|
+| i    | Download and install script                        |
+| b    | Download and install binary file to /usr/local/bin |
+| g    | Just Download                                      |
+| x    | Download and extract                               |
 
-## Installing ##
 
-    make install
+## Use-Cases
 
-## Usage ##
+### Download Stuff
 
-Both of the following commands result in a folder of code
+Just grab files from the web and extract them, remove the archive.  This simplifies the av-shell binary install too
 
-    har https://github.com/BVLC/caffe/archive/rc3.zip
-    har https://github.com/BVLC/caffe/archive/rc3.tar.gz
+example usage:
+
+    har x https://github.com/BVLC/caffe/archive/rc3.zip
+    har x https://github.com/sio2boss/av-shell/releases/download/2.1.0/av-shell-2.1.0-linux64.tar.gz -C ~/
+    
+or if you dont want to automatically extract:
+
+    har g https://github.com/BVLC/caffe/archive/rc3.zip
+
+### Install Stuff
+
+There are a ton of examples on the internet where you download a file with curl and then run the script afterwards…brew, kops, av-shell.  But also there are apps that you just download and copy to /usr/local/bin and chmod like mc, kubectl, etc...
+
+for the download, chmod, and move to /usr/local/bin style:
+
+    har b https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
+    har b https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+    har b https://dl.min.io/client/mc/release/darwin-amd64/mc
+
+for the run a script style:
+
+    har i https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
+    har i -—ruby https://raw.githubusercontent.com/Homebrew/install/master/install
