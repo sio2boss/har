@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/docopt/docopt-go"
@@ -17,10 +19,10 @@ import (
 var usage = `Har, from the Swedish verb 'to have', downloads the URL and handles repetitive tasks for you.
 
 Usage:
-  har i [--sudo] [--ruby|--python|--python3] [-y] URL
-  har b [-y] URL
-  har g URL [-O FILE]
-  har x URL [-C DIR]
+  har i [--sudo] [--ruby|--python|--python3] [-ys] [--sha1=<sum>] URL
+  har b [-ys] [--sha1=<sum>] URL
+  har g [-s] [--sha1=<sum>] URL [-O FILE]
+  har x [-s] [--sha1=<sum>] URL [-C DIR]
   har -h | --help
   har --version
 
@@ -37,6 +39,8 @@ Options:
   --python3       Run script with python3
   --sudo          Run with sudo
   -y              Use for interactive mode
+  -s --silent     Do not show download progress
+  --sha1=<sum>    Verify sha1sum of downloaded content before proceeding
 `
 
 var log = logrus.New()
@@ -52,7 +56,20 @@ func getFilenameFromUrl(url string) string {
 	return tokens[len(tokens)-1]
 }
 
-func downloadFromUrl(fileName string, url string) int64 {
+func verify(input io.ReadCloser, sha string) (bool, error) {
+
+	hash := sha1.New()
+	if _, err := io.Copy(hash, input); err != nil {
+		return false, err
+	}
+
+	hashInBytes := hash.Sum(nil)
+	hashsum := hex.EncodeToString(hashInBytes)
+
+	return hashsum == sha, nil
+}
+
+func downloadFromUrl(fileName string, url string, showProgress bool, sha interface{}) int64 {
 
 	// Check file existence first
 	if _, err := os.Stat(fileName); os.IsExist(err) {
@@ -76,18 +93,54 @@ func downloadFromUrl(fileName string, url string) int64 {
 	}
 	defer response.Body.Close()
 
+	// Display Progress Bar
 	bar := pb.New64(response.ContentLength)
 	bar.SetWidth(100)
-	bar.Start()
-	reader := bar.NewProxyReader(response.Body)
+
+	var reader io.ReadCloser
+	if showProgress {
+		bar.Start()
+		reader = ioutil.NopCloser(bar.NewProxyReader(response.Body))
+	} else {
+		reader = response.Body
+	}
+
+	// Copy
 	n, err := io.Copy(output, reader)
 	if err != nil {
 		log.WithError(err).Info("Error while downloading", url)
 	}
-	bar.Finish()
+
+	// Close
+	if showProgress {
+		bar.Finish()
+	}
 	output.Close()
 
+	// Verify sha1sum
+	if _, ok := sha.(string); ok && n > 0 {
+		// Read
+		written, err := os.Open(fileName)
+		if err != nil {
+			log.WithError(err).Info("Error in reading file downloaded", url)
+			written.Close()
+			os.Remove(fileName)
+			return 0
+		}
+		v, err := verify(written, sha.(string))
+		if v == false || err != nil {
+			log.WithError(err).Info("Error in sha1sum validation", url)
+			written.Close()
+			os.Remove(fileName)
+			return 0
+		}
+	}
+
+	if showProgress {
+		fmt.Println("Downloaded file matches: ", sha)
+	}
 	return n
+
 }
 
 func getSystemCommandFromFilename(filename string) (string, string) {
@@ -179,6 +232,8 @@ func main() {
 	arguments, _ := docopt.ParseDoc(usage)
 
 	url, _ := arguments["URL"].(string)
+	showProgress := arguments["--silent"].(bool) == false
+	sha := arguments["--sha1"]
 
 	// Process modes of operation
 	if arguments["g"] == true {
@@ -189,7 +244,7 @@ func main() {
 			filename, _ = arguments["-O"].(string)
 		}
 
-		downloadFromUrl(filename, url)
+		downloadFromUrl(filename, url, showProgress, sha)
 
 	} else if arguments["x"] == true {
 
@@ -203,7 +258,7 @@ func main() {
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
-		if downloadFromUrl(filename, url) < 1 {
+		if downloadFromUrl(filename, url, showProgress, sha) < 1 {
 			log.Fatal("Unable to download")
 		}
 
@@ -232,7 +287,7 @@ func main() {
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
-		if downloadFromUrl(filename, url) < 1 {
+		if downloadFromUrl(filename, url, showProgress, sha) < 1 {
 			return
 		}
 
@@ -269,7 +324,7 @@ func main() {
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
-		if downloadFromUrl(filename, url) < 1 {
+		if downloadFromUrl(filename, url, showProgress, sha) < 1 {
 			return
 		}
 
