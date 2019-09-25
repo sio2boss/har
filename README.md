@@ -31,7 +31,7 @@ Just grab files from the web and extract them, remove the archive.  This simplif
 
 example usage:
 
-    har x https://github.com/BVLC/caffe/archive/rc3.zip
+    har x --silent https://github.com/BVLC/caffe/archive/rc3.zip
     har x https://github.com/sio2boss/av-shell/releases/download/2.1.0/av-shell-2.1.0-linux64.tar.gz -C ~/
     
 or if you dont want to automatically extract:
@@ -45,7 +45,7 @@ There are a ton of examples on the internet where you download a file with curl 
 for the download, chmod, and move to /usr/local/bin style:
 
     har b https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
-    har b https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+    har b --sha1=d604417c2efba1413e2441f16de3be84d3d9b1ae https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
     har b https://dl.min.io/client/mc/release/darwin-amd64/mc
 
 for the run a script style:
