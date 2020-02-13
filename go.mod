@@ -9,3 +9,5 @@ require (
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/sys v0.0.0-20190907184412-d223b2b6db03 // indirect
 )
+
+go 1.13
