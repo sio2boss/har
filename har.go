@@ -19,10 +19,10 @@ import (
 var usage = `Har, from the Swedish verb 'to have', downloads the URL and handles repetitive tasks for you.
 
 Usage:
-  har i [--sudo] [--ruby|--python|--python3] [-ys] [--sha1=<sum>] URL
-  har b [-ys] [--sha1=<sum>] URL
-  har g [-s] [--sha1=<sum>] URL [-O FILE]
-  har x [-s] [--sha1=<sum>] URL [-C DIR]
+  har (i|install) [--sudo] [--ruby|--python|--python3] [-ys] [--sha1=<sum>] URL
+  har (b|binary)  [-ys] [--sha1=<sum>] URL [-O FILE]
+  har (g|get)     [-s] [--sha1=<sum>] URL [-O FILE]
+  har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
   har -h | --help
   har --version
 
@@ -38,7 +38,7 @@ Options:
   --python        Run script with python
   --python3       Run script with python3
   --sudo          Run with sudo
-  -y              Use for interactive mode
+  -y              Assume yes, use for non-interactive mode
   -s --silent     Do not show download progress
   --sha1=<sum>    Verify sha1sum of downloaded content before proceeding
 `
@@ -136,7 +136,7 @@ func downloadFromUrl(fileName string, url string, showProgress bool, sha interfa
 		}
 	}
 
-	if showProgress {
+	if showProgress && sha != nil {
 		fmt.Println("Downloaded file matches: ", sha)
 	}
 	return n
@@ -297,8 +297,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// Force Move?
+		// Set destination
 		destination := "/usr/local/bin/" + getFilenameFromUrl(url)
+		if arguments["-O"] != nil {
+			destination, _ = arguments["-O"].(string)
+		}
+
+		// Force Move?
 		if arguments["-y"] == true {
 			err = os.Remove(destination)
 			if err != nil {
