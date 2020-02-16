@@ -1,40 +1,34 @@
-VERSION := 1.2.0
+VERSION := $(shell ./tools/version.sh)
 
 .PHONY: all release
 
 all:
 	go build
 
-release: arm arm64 mac64 linux64 win64
-
-arm:
-	mkdir -p release
-	env GOOS=linux GOARCH=arm go build
-	tar cvfz release/har-v$(VERSION)-arm.tar.gz har
-	rm -f har
+release: arm64 mac64 linux64 win64
 
 arm64:
 	mkdir -p release
 	env GOOS=linux GOARCH=arm64 go build
-	tar cvfz release/har-v$(VERSION)-arm64.tar.gz har
+	tar cvfz release/har-$(VERSION)-arm64.tar.gz har
 	rm -f har
 
 mac64:
 	mkdir -p release
 	env GOOS=darwin GOARCH=amd64 go build
-	tar cvfz release/har-v$(VERSION)-mac64.tar.gz har
+	tar cvfz release/har-$(VERSION)-mac64.tar.gz har
 	rm -f har
 
 linux64:
 	mkdir -p release
 	env GOOS=linux GOARCH=amd64 go build
-	tar cvfz release/har-v$(VERSION)-linux64.tar.gz har
+	tar cvfz release/har-$(VERSION)-linux64.tar.gz har
 	rm -f har
 
 win64:
 	mkdir -p release
 	env GOOS=windows GOARCH=amd64 go build
-	zip release/har-v$(VERSION)-win64.zip har.exe
+	zip release/har-$(VERSION)-win64.zip har.exe
 	rm -f har.exe
 
 clean:

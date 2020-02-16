@@ -19,9 +19,9 @@ import (
 var usage = `Har, from the Swedish verb 'to have', downloads the URL and handles repetitive tasks for you.
 
 Usage:
-  har (i|install) [--sudo] [--ruby|--python|--python3] [-ys] [--sha1=<sum>] URL
-  har (b|binary)  [-ys] [--sha1=<sum>] URL [-O FILE]
-  har (g|get)     [-s] [--sha1=<sum>] URL [-O FILE]
+  har (i|install) [--sudo] [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
+  har (b|binary)  [-y] [-s] [--sha1=<sum>] URL [-O FILE]
+  har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
   har -h | --help
   har --version
@@ -191,7 +191,7 @@ func getOutputFlags(filename string, outputPath string) string {
 	}
 }
 
-func extractDownloadedFile(filename string, outputPath string) {
+func extractDownloadedFile(filename string, outputPath string, show bool) {
 
 	// Get extract commands
 	extract_command, extract_args := getSystemCommandFromFilename(filename)
@@ -208,9 +208,10 @@ func extractDownloadedFile(filename string, outputPath string) {
 	}
 
 	// Extract
-	// TODO add verbose flag
-	//cmd.Stdout = os.Stdout
-	//cmd.Stderr = os.Stderr
+	if show {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
 	err := cmd.Run()
 	if err != nil {
 		log.WithError(err).Error("Unable to extract file")
@@ -229,7 +230,7 @@ func removeDownloadedFile(filename string) {
 
 func main() {
 
-	arguments, _ := docopt.ParseDoc(usage)
+	arguments, _ := docopt.ParseArgs(usage, nil, "v1.2.1")
 
 	url, _ := arguments["URL"].(string)
 	showProgress := arguments["--silent"].(bool) == false
@@ -242,6 +243,11 @@ func main() {
 		filename := getFilenameFromUrl(url)
 		if arguments["-O"] != nil {
 			filename, _ = arguments["-O"].(string)
+		}
+
+		// Force Move?
+		if arguments["-y"] == true {
+			removeIfExists(filename)
 		}
 
 		downloadFromUrl(filename, url, showProgress, sha)
@@ -270,7 +276,7 @@ func main() {
 
 		// Extract
 		if filename != "" {
-			extractDownloadedFile(filename, output_path)
+			extractDownloadedFile(filename, output_path, showProgress)
 		}
 
 		removeDownloadedFile(dir)
@@ -305,10 +311,7 @@ func main() {
 
 		// Force Move?
 		if arguments["-y"] == true {
-			err = os.Remove(destination)
-			if err != nil {
-				log.Fatal(err)
-			}
+			removeIfExists(destination)
 		}
 		err = os.Rename(filename, destination)
 		if err != nil {
@@ -377,4 +380,13 @@ func main() {
 		removeDownloadedFile(dir)
 	}
 
+}
+
+func removeIfExists(destination string) {
+	if _, err := os.Stat(destination); os.IsExist(err) {
+		err = os.Remove(destination)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
