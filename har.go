@@ -23,11 +23,13 @@ Usage:
   har (b|binary)  [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
+  har (c|create)  DIR [-O FILE]
   har -h | --help
   har --version
 
 Arguments:
   URL             Web address of archive or script you want to have
+  DIR             Directory to turn into self-extracting installer
 
 Options:
   -h --help       Show this screen
@@ -44,6 +46,29 @@ Options:
 `
 
 var log = logrus.New()
+var decompress = `
+#!/bin/bash
+echo ""
+echo "Self Extracting..."
+
+export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)
+
+ARCHIVE=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0)
+
+tail -n+$ARCHIVE $0 | tar xzv --strip-components=1 -C $TMPDIR
+
+CDIR=$(pwd)
+cd $TMPDIR
+echo "Installing..."
+./installer
+
+cd $CDIR
+rm -rf $TMPDIR
+
+exit 0
+
+__ARCHIVE_BELOW__
+`
 
 func init() {
 
@@ -378,6 +403,37 @@ func main() {
 		}
 
 		removeDownloadedFile(dir)
+	} else if arguments["c"] == true {
+
+		// Compress
+		tempfile := os.TempDir() + "payload.tgz"
+		directory, _ := arguments["DIR"].(string)
+		cmd := exec.Command("tar", "cvfz", tempfile, directory)
+		err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Read tar
+		content, err := ioutil.ReadFile(tempfile)
+		defer os.Remove(tempfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Write out
+		filename := directory + ".har"
+		if arguments["-O"] != nil {
+			filename, _ = arguments["-O"].(string)
+		}
+		var outbytes []byte
+		outbytes = append(outbytes, []byte(decompress)...)
+		outbytes = append(outbytes, content...)
+		err = ioutil.WriteFile(filename, outbytes, 0744)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 
 }
