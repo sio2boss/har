@@ -33,13 +33,14 @@ echo "  * Using https://github.com/sio2boss/har/releases/download/${VERSION}/har
 curl -o /tmp/har.${FORMAT} -fsSL https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}
 
 if [ -e /tmp/har.${FORMAT} ]; then
-    rm -f /usr/local/bin/har && \
+    rm -f ~/.local/bin/har && \
       echo "  * Removing existing executable" && \
-      cd /usr/local/bin/ && \
+      cd ~/.local/bin/ && \
       tar xfz /tmp/har.${FORMAT} && \
       echo "  * Extracting" && \
       rm /tmp/har.${FORMAT} && \
-      echo "  * Success!"
+      echo "  * Success!" && \
+      popd
     exit
 fi
 
