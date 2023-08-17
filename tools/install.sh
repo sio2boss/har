@@ -36,12 +36,10 @@ if [ -e /tmp/har.${FORMAT} ]; then
     mkdir -p ~/.local/bin
     rm -f ~/.local/bin/har && \
       echo "  * Removing existing executable" && \
-      cd ~/.local/bin/ && \
-      tar xfz /tmp/har.${FORMAT} && \
+      tar xfz /tmp/har.${FORMAT} -C ~/.local/bin/ && \
       echo "  * Extracting" && \
       rm /tmp/har.${FORMAT} && \
       echo "  * Success!" && \
-      popd
     exit
 fi
 
