@@ -33,6 +33,7 @@ echo "  * Using https://github.com/sio2boss/har/releases/download/${VERSION}/har
 curl -o /tmp/har.${FORMAT} -fsSL https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}
 
 if [ -e /tmp/har.${FORMAT} ]; then
+    mkdir -p ~/.local/bin
     rm -f ~/.local/bin/har && \
       echo "  * Removing existing executable" && \
       cd ~/.local/bin/ && \
