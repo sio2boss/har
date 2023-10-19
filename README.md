@@ -21,7 +21,21 @@ or if you already have har installed and want the update
 | b    | Download and install binary file to /usr/local/bin |
 | g    | Just Download                                      |
 | x    | Download and extract                               |
+| c    | Create binary installer                            |
 
+
+## Usage
+
+```sh
+Usage:
+  har (i|install) [--sudo] [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
+  har (b|binary)  [-y] [-s] [--sha1=<sum>] URL [-O FILE]
+  har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
+  har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
+  har (c|create)  DIR [-O FILE]
+  har -h | --help
+  har --version
+```
 
 ## Use-Cases
 
@@ -34,7 +48,7 @@ example usage:
     har x --silent https://github.com/BVLC/caffe/archive/rc3.zip
     har x https://github.com/sio2boss/av-shell/releases/download/2.1.0/av-shell-2.1.0-linux64.tar.gz -C ~/
     
-or if you dont want to automatically extract:
+or if you dont want to automatically extract (basically curl/wget but to a file):
 
     har g https://github.com/BVLC/caffe/archive/rc3.zip
 
@@ -42,7 +56,7 @@ or if you dont want to automatically extract:
 
 There are a ton of examples on the internet where you download a file with curl and then run the script afterwards…brew, kops, av-shell.  But also there are apps that you just download and copy to /usr/local/bin and chmod like mc, kubectl, etc...
 
-for the download, chmod, and move to /usr/local/bin style:
+for the download, chmod, and move to ~/.local/bin style:
 
     har b https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
     har b --sha1=d604417c2efba1413e2441f16de3be84d3d9b1ae https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl

@@ -5,15 +5,15 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
-	"github.com/docopt/docopt-go"
-	"github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/cheggaaa/pb/v3"
+	"github.com/docopt/docopt-go"
+	"github.com/sirupsen/logrus"
 )
 
 var usage = `Har, from the Swedish verb 'to have', downloads the URL and handles repetitive tasks for you.
@@ -125,7 +125,7 @@ func downloadFromUrl(fileName string, url string, showProgress bool, sha interfa
 	var reader io.ReadCloser
 	if showProgress {
 		bar.Start()
-		reader = ioutil.NopCloser(bar.NewProxyReader(response.Body))
+		reader = io.NopCloser(bar.NewProxyReader(response.Body))
 	} else {
 		reader = response.Body
 	}
@@ -153,7 +153,7 @@ func downloadFromUrl(fileName string, url string, showProgress bool, sha interfa
 			return 0
 		}
 		v, err := verify(written, sha.(string))
-		if v == false || err != nil {
+		if !v || err != nil {
 			log.WithError(err).Info("Error in sha1sum validation", url)
 			written.Close()
 			os.Remove(fileName)
@@ -255,10 +255,10 @@ func removeDownloadedFile(filename string) {
 
 func main() {
 
-	arguments, _ := docopt.ParseArgs(usage, nil, "v1.2.1")
+	arguments, _ := docopt.ParseArgs(usage, nil, "v1.2.2")
 
 	url, _ := arguments["URL"].(string)
-	showProgress := arguments["--silent"].(bool) == false
+	showProgress := !arguments["--silent"].(bool)
 	sha := arguments["--sha1"]
 
 	// Process modes of operation
@@ -282,10 +282,7 @@ func main() {
 		// Download and extract
 
 		// Create temp directory
-		dir, err := ioutil.TempDir("", "har")
-		if err != nil {
-			log.Fatal(err)
-		}
+		dir := os.TempDir()
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -311,10 +308,7 @@ func main() {
 		// Download, chmod, and move
 
 		// Create temp directory
-		dir, err := ioutil.TempDir("", "har")
-		if err != nil {
-			log.Fatal(err)
-		}
+		dir := os.TempDir()
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -323,13 +317,13 @@ func main() {
 		}
 
 		// Chmod
-		err = os.Chmod(filename, 0776)
+		err := os.Chmod(filename, 0776)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Set destination
-		destination := "/usr/local/bin/" + getFilenameFromUrl(url)
+		destination := "~/.local/bin/" + getFilenameFromUrl(url)
 		if arguments["-O"] != nil {
 			destination, _ = arguments["-O"].(string)
 		}
@@ -350,10 +344,7 @@ func main() {
 		// Download, chmod, and move
 
 		// Create temp directory
-		dir, err := ioutil.TempDir("", "har")
-		if err != nil {
-			log.Fatal(err)
-		}
+		dir := os.TempDir()
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -385,7 +376,7 @@ func main() {
 		if arguments["--sudo"] == true {
 			fmt.Println("Running: '"+"sudo", shell, filename+"':")
 			cmd := exec.Command("sudo", shell, filename)
-			err = cmd.Run()
+			err := cmd.Run()
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			if err != nil {
@@ -396,7 +387,7 @@ func main() {
 			cmd := exec.Command(shell, filename)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			err = cmd.Run()
+			err := cmd.Run()
 			if err != nil {
 				log.Fatal("Unable to run script", err)
 			}
@@ -415,7 +406,7 @@ func main() {
 		}
 
 		// Read tar
-		content, err := ioutil.ReadFile(tempfile)
+		content, err := os.ReadFile(tempfile)
 		defer os.Remove(tempfile)
 		if err != nil {
 			log.Fatal(err)
@@ -429,7 +420,7 @@ func main() {
 		var outbytes []byte
 		outbytes = append(outbytes, []byte(decompress)...)
 		outbytes = append(outbytes, content...)
-		err = ioutil.WriteFile(filename, outbytes, 0744)
+		err = os.WriteFile(filename, outbytes, 0744)
 		if err != nil {
 			log.Fatal(err)
 		}
