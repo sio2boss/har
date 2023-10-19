@@ -10,23 +10,36 @@ case $OS in
   'Linux')
     case $ARCH in
         'x86_64')
-            OSARCH='linux64'
+            OSARCH='linux-amd64'
             ;;
         'armv8')
-            OSARCH='arm64'
+            OSARCH='linux-arm64'
             ;;
-        'armv7l')
-            OSARCH='arm'
-            ;;
-        *)
-            OSARCH='linux32'
     esac
     ;;
   'Darwin')
-    OSARCH='mac64'
+    case $ARCH in
+        'x86_64')
+            OSARCH='apple-amd64'
+            ;;
+        'arm64')
+            OSARCH='apple-arm64'
+            ;;
+    esac
+    ;;
+  'Windows')
+    case $ARCH in
+        'x86_64')
+            OSARCH='windows-amd64'
+            ;;
+        'arm64')
+            OSARCH='windows-arm64'
+            ;;
+    esac
     ;;
   *) ;;
 esac
+
 
 echo "Installing Har ${VERSION}..."
 echo "  * Using https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}"
@@ -43,4 +56,4 @@ if [ -e /tmp/har.${FORMAT} ]; then
     exit
 fi
 
-echo "  * Failed due to some reason. Please try manually downloading har and copy the binary to /usr/local/bin"
+echo "  * Failed due to some reason. Please try manually downloading har and copy the binary to ~/.local/bin"
