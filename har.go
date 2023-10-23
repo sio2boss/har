@@ -282,7 +282,10 @@ func main() {
 		// Download and extract
 
 		// Create temp directory
-		dir := os.TempDir()
+		dir, err := os.MkdirTemp("", "har")
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -308,7 +311,10 @@ func main() {
 		// Download, chmod, and move
 
 		// Create temp directory
-		dir := os.TempDir()
+		dir, err := os.MkdirTemp("", "har")
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -317,7 +323,7 @@ func main() {
 		}
 
 		// Chmod
-		err := os.Chmod(filename, 0776)
+		err = os.Chmod(filename, 0776)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -344,7 +350,10 @@ func main() {
 		// Download, chmod, and move
 
 		// Create temp directory
-		dir := os.TempDir()
+		dir, err := os.MkdirTemp("", "har")
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		// Download
 		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
@@ -376,7 +385,7 @@ func main() {
 		if arguments["--sudo"] == true {
 			fmt.Println("Running: '"+"sudo", shell, filename+"':")
 			cmd := exec.Command("sudo", shell, filename)
-			err := cmd.Run()
+			err = cmd.Run()
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			if err != nil {
@@ -387,7 +396,7 @@ func main() {
 			cmd := exec.Command(shell, filename)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			err := cmd.Run()
+			err = cmd.Run()
 			if err != nil {
 				log.Fatal("Unable to run script", err)
 			}
