@@ -66,3 +66,4 @@ for the run a script style:
 
     har i https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
     har i -—ruby https://raw.githubusercontent.com/Homebrew/install/master/install
+    har i --sudo ./install.sh

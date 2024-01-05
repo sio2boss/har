@@ -3,7 +3,7 @@
 # Figure out OS and ARCH
 OS="`uname`"
 ARCH="`uname -m`"
-VERSION=v1.2.2
+VERSION=v1.3.0
 OSARCH=
 FORMAT=tar.gz
 case $OS in

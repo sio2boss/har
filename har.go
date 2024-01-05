@@ -356,9 +356,12 @@ func main() {
 		}
 
 		// Download
-		filename := dir + string(os.PathSeparator) + getFilenameFromUrl(url)
-		if downloadFromUrl(filename, url, showProgress, sha) < 1 {
-			return
+		filename := url
+		if len(url) > 4 && url[0:4] == "http" {
+			filename = dir + string(os.PathSeparator) + getFilenameFromUrl(url)
+			if downloadFromUrl(filename, url, showProgress, sha) < 1 {
+				return
+			}
 		}
 
 		shell := "bash"
@@ -379,26 +382,31 @@ func main() {
 				return
 			}
 		}
-		fmt.Println()
 
 		// Run
 		if arguments["--sudo"] == true {
-			fmt.Println("Running: '"+"sudo", shell, filename+"':")
+			if arguments["--silent"] == false {
+				fmt.Println("Running: '" + "sudo " + shell + " " + filename + "':")
+			}
 			cmd := exec.Command("sudo", shell, filename)
-			err = cmd.Run()
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
+			err = cmd.Run()
 			if err != nil {
-				log.Fatal("Unable to run script", err)
+				log.Fatal("Unable to run script -- ", err)
 			}
 		} else {
-			fmt.Println("Running: '", shell, filename, "':")
+			if arguments["--silent"] == false {
+				fmt.Println("Running: '" + shell + " " + filename + "':")
+			}
 			cmd := exec.Command(shell, filename)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+			if arguments["--silent"] == false {
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+			}
 			err = cmd.Run()
 			if err != nil {
-				log.Fatal("Unable to run script", err)
+				log.Fatal("Unable to run script -- ", err)
 			}
 		}
 
