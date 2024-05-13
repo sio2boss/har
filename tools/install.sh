@@ -15,6 +15,9 @@ case $OS in
         'armv8')
             OSARCH='linux-arm64'
             ;;
+        'armv7l')
+            OSARCH='linux-arm64'
+            ;;
     esac
     ;;
   'Darwin')
