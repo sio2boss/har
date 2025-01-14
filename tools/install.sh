@@ -47,15 +47,24 @@ case $OS in
 esac
 
 
+# Download
 echo "Installing Har ${VERSION}..."
-echo "  * Using https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}"
+echo "  for ${OSARCH} system"
 curl -o /tmp/har.${FORMAT} -fsSL https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-${OSARCH}.${FORMAT}
 
+# Check if the user is root and adjust the installation directory accordingly
+INSTALL_DIR='~/.local/bin'
+if [ "$(id -u)" -eq 0 ]; then
+  INSTALL_DIR='/usr/local/bin'
+fi
+echo " into ${INSTALL_DIR}"
+
+# Install
 if [ -e /tmp/har.${FORMAT} ]; then
-    mkdir -p ~/.local/bin
-    rm -f ~/.local/bin/har && \
+    mkdir -p ${INSTALL_DIR}
+    rm -f ${INSTALL_DIR}/har && \
       echo "  * Removing existing executable" && \
-      tar xfz /tmp/har.${FORMAT} -C ~/.local/bin/ && \
+      tar xfz /tmp/har.${FORMAT} -C ${INSTALL_DIR}/ && \
       echo "  * Extracting" && \
       rm /tmp/har.${FORMAT} && \
       echo "  * Success!"

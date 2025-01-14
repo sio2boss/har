@@ -19,7 +19,7 @@ import (
 var usage = `Har, from the Swedish verb 'to have', downloads the URL and handles repetitive tasks for you.
 
 Usage:
-  har (i|install) [--sudo] [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
+  har (i|install) [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
   har (b|binary)  [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
@@ -39,7 +39,6 @@ Options:
   --ruby          Run script with ruby
   --python        Run script with python
   --python3       Run script with python3
-  --sudo          Run with sudo
   -y              Assume yes, use for non-interactive mode
   -s --silent     Do not show download progress
   --sha1=<sum>    Verify sha1sum of downloaded content before proceeding
@@ -384,33 +383,21 @@ func main() {
 		}
 
 		// Run
-		if arguments["--sudo"] == true {
-			if arguments["--silent"] == false {
-				fmt.Println("Running: '" + "sudo " + shell + " " + filename + "':")
-			}
-			cmd := exec.Command("sudo", shell, filename)
+		if arguments["--silent"] == false {
+			fmt.Println("[har] Running: '" + shell + " " + filename + "':")
+		}
+		cmd := exec.Command(shell, filename)
+		if arguments["--silent"] == false {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			err = cmd.Run()
-			if err != nil {
-				log.Fatal("Unable to run script -- ", err)
-			}
-		} else {
-			if arguments["--silent"] == false {
-				fmt.Println("Running: '" + shell + " " + filename + "':")
-			}
-			cmd := exec.Command(shell, filename)
-			if arguments["--silent"] == false {
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-			}
-			err = cmd.Run()
-			if err != nil {
-				log.Fatal("Unable to run script -- ", err)
-			}
+		}
+		err = cmd.Run()
+		if err != nil {
+			log.Fatal("[har] Unable to run script -- ", err)
 		}
 
 		removeDownloadedFile(dir)
+
 	} else if arguments["c"] == true {
 
 		// Compress

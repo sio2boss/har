@@ -13,6 +13,10 @@ or if you already have har installed and want the update
 
     har i -y https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
 
+if you want to be able to run commands as root, then install with sudo
+
+   sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh)"
+
 ## Modes
 
 | Mode | Description                                        |
@@ -28,7 +32,7 @@ or if you already have har installed and want the update
 
 ```sh
 Usage:
-  har (i|install) [--sudo] [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
+  har (i|install) [--ruby|--python|--python3] [-y] [-s] [--sha1=<sum>] URL
   har (b|binary)  [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
@@ -66,4 +70,4 @@ for the run a script style:
 
     har i https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
     har i -—ruby https://raw.githubusercontent.com/Homebrew/install/master/install
-    har i --sudo ./install.sh
+    har i ./install.sh
