@@ -58,8 +58,9 @@ if [ -e /tmp/har.${FORMAT} ]; then
       tar xfz /tmp/har.${FORMAT} -C ~/.local/bin/ && \
       echo "  * Extracting" && \
       rm /tmp/har.${FORMAT} && \
-      echo "  * Success!" && \
-    exit
+      echo "  * Success!"
+    exit $?
 fi
 
 echo "  * Failed due to some reason. Please try manually downloading har and copy the binary to ~/.local/bin"
+exit 1
