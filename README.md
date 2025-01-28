@@ -54,7 +54,7 @@ example usage:
     
 or if you dont want to automatically extract (basically curl/wget but to a file):
 
-    har g https://github.com/BVLC/caffe/archive/rc3.zip
+    har g http://ftp.gnu.org/gnu/wget/wget2-2.0.0.tar.gz
 
 ### Install Stuff
 
@@ -68,6 +68,15 @@ for the download, chmod, and move to ~/.local/bin style:
 
 for the run a script style:
 
+    har i https://raw.githubusercontent.com/sio2boss/har/refs/heads/master/packs/git-hist.har
     har i https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh
     har i -—ruby https://raw.githubusercontent.com/Homebrew/install/master/install
     har i ./install.sh
+
+
+## Development
+
+```
+go install gotest.tools/gotestsum@latest
+gotestsum --format-icons hivis --format testname --hide-summary=all --watch
+```

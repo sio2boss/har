@@ -30,9 +30,12 @@ fabric.properties
 
 
 # go stuff
-bin
 pkg
 src
 release
 /har
 .vscode/launch.json
+
+# windsurf rules
+.windsurfrules
+/tmp/

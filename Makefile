@@ -3,7 +3,8 @@ VERSION := $(shell ./tools/version.sh)
 .PHONY: all release
 
 all:
-	go build
+	go mod tidy
+	go build -o har cmd/har/main.go 
 
 release: linux_arm64 linux_amd64 apple_amd64 apple_arm64 win_amd64 win_arm64
 
