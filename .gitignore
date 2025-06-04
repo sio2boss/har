@@ -35,6 +35,7 @@ src
 release
 /har
 .vscode/launch.json
+/homebrew
 
 # windsurf rules
 .windsurfrules

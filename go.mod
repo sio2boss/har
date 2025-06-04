@@ -1,9 +1,11 @@
 module github.com/sio2boss/har
 
-go 1.18
+go 1.23.0
+
+toolchain go1.24.3
 
 require (
-	github.com/cheggaaa/pb/v3 v3.1.6
+	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
@@ -18,6 +20,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
