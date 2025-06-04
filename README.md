@@ -5,13 +5,10 @@ From the Swedish verb 'to have'.  We as developers and end users often download 
 
 ## Quick Install Instructions
 
-This is the best way other folks on github have figured out how to download a golang based binary and install it.
-
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh)"
-
-if you want to be able to run commands as root, then install with sudo
-
-   sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/sio2boss/har/master/tools/install.sh)"
+Install with homebrew
+```bash
+brew install sio2boss/tap/har
+```
 
 ## Modes
 
