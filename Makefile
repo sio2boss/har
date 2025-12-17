@@ -1,8 +1,11 @@
 VERSION := $(shell ./tools/version.sh)
 
-.PHONY: all test tests release homebrew
+.PHONY: all test tests release homebrew update-version
 
-all:
+update-version:
+	@sed -i '' 's/"v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*"/"$(VERSION)"/' cmd/har/main.go
+
+all: update-version
 	go mod tidy
 	go build -o har cmd/har/main.go 
 
@@ -11,7 +14,7 @@ test:
 
 tests: test
 
-release: linux_arm64 linux_amd64 apple_amd64 apple_arm64 win_amd64 win_arm64
+release: all linux_arm64 linux_amd64 apple_amd64 apple_arm64 win_amd64 win_arm64
 
 linux_arm64:
 	mkdir -p release
@@ -49,7 +52,7 @@ win_arm64:
 	zip release/har-$(VERSION)-windows-arm64.zip har.exe
 	rm -f har.exe
 
-homebrew: release
+homebrew:
 	@echo "Updating Homebrew formula for version $(VERSION)..."
 	./tools/update_homebrew_formula.sh $(VERSION)
 

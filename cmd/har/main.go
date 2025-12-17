@@ -39,7 +39,7 @@ Options:
 func main() {
 
 	// Parse arguments
-	arguments, err := docopt.ParseArgs(usage, nil, "v1.2.2")
+	arguments, err := docopt.ParseArgs(usage, nil, "v1.3.2")
 	if err != nil {
 		har.Fatal(err)
 		os.Exit(1)
