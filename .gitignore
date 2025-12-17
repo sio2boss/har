@@ -30,7 +30,6 @@ fabric.properties
 
 
 # go stuff
-pkg
 src
 release
 /har
