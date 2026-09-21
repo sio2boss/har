@@ -1,8 +1,8 @@
 module github.com/sio2boss/har
 
-go 1.24.0
+go 1.27.0
 
-toolchain go1.24.3
+toolchain go1.27.1
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.7
