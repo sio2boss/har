@@ -20,7 +20,7 @@ Usage:
   har --version
 
 Arguments:
-  URL             Web address of archive or script you want to have
+  URL             Web address of archive, script, or git repo (.git) you want to have
   DIR             Directory to turn into self-extracting installer
 
 Options:

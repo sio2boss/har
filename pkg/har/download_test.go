@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -25,6 +26,21 @@ func TestNewDownload(t *testing.T) {
 	assert.False(t, d.Options.Force)
 }
 
+func TestIsGitRepoUrl(t *testing.T) {
+	assert.True(t, isGitRepoUrl("https://github.com/foo/bar.git"))
+	assert.True(t, isGitRepoUrl("https://github.com/foo/bar.git/"))
+	assert.True(t, isGitRepoUrl("git@github.com:foo/bar.git"))
+	assert.False(t, isGitRepoUrl("https://github.com/foo/bar"))
+	assert.False(t, isGitRepoUrl("https://example.com/file.zip"))
+	assert.False(t, isGitRepoUrl("https://example.com/file.git.bak"))
+}
+
+func TestGetRepoNameFromUrl(t *testing.T) {
+	assert.Equal(t, "bar", getRepoNameFromUrl("https://github.com/foo/bar.git"))
+	assert.Equal(t, "bar", getRepoNameFromUrl("https://github.com/foo/bar.git/"))
+	assert.Equal(t, "av-shell", getRepoNameFromUrl("https://github.com/sio2boss/av-shell.git"))
+}
+
 func TestGetDestinationPath(t *testing.T) {
 	d, err := NewDownload("http://example.com/test.zip", "", true, nil, false)
 	assert.NoError(t, err)
@@ -44,6 +60,51 @@ func TestGetDestinationPath(t *testing.T) {
 	cwd, _ := os.Getwd()
 	cwdPath := d.GetDestinationPath()
 	assert.Equal(t, filepath.Join(cwd, "test.zip"), cwdPath)
+
+	// Git URLs should strip .git for the destination directory name
+	gd, err := NewDownload("https://github.com/foo/bar.git", "", true, nil, false)
+	assert.NoError(t, err)
+	assert.Equal(t, filepath.Join(cwd, "bar"), gd.GetDestinationPath())
+	assert.Equal(t, filepath.Join(gd.TempDir, "bar"), gd.GetDestinationPath(true))
+}
+
+func TestCloneFromUrl(t *testing.T) {
+	// Create a local git repo to clone from
+	srcDir := t.TempDir()
+	srcRepo := filepath.Join(srcDir, "sample")
+	assert.NoError(t, os.MkdirAll(srcRepo, 0755))
+	assert.NoError(t, os.WriteFile(filepath.Join(srcRepo, "README"), []byte("hi"), 0644))
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v failed: %v\n%s", args, err, out)
+		}
+	}
+
+	run(srcRepo, "git", "init")
+	run(srcRepo, "git", "config", "user.email", "test@example.com")
+	run(srcRepo, "git", "config", "user.name", "test")
+	run(srcRepo, "git", "add", ".")
+	run(srcRepo, "git", "commit", "-m", "init")
+
+	destDir := t.TempDir()
+	d, err := NewDownload(srcRepo, filepath.Join(destDir, "cloned"), true, nil, false)
+	assert.NoError(t, err)
+
+	// Force .git URL detection by using a path that ends in .git
+	bare := filepath.Join(srcDir, "sample.git")
+	run(srcDir, "git", "clone", "--bare", srcRepo, bare)
+
+	d.Options.URL = bare
+	n := d.cloneFromUrl(false)
+	assert.Equal(t, int64(1), n)
+
+	_, err = os.Stat(filepath.Join(destDir, "cloned", "README"))
+	assert.NoError(t, err)
 }
 
 func TestDownloadWithSHA1(t *testing.T) {

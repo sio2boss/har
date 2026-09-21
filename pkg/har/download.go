@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -42,6 +43,13 @@ func (d *Download) Cleanup() {
 	RemoveDownloadedFile(d.TempDir)
 }
 
+func (d *Download) destinationName() string {
+	if isGitRepoUrl(d.Options.URL) {
+		return getRepoNameFromUrl(d.Options.URL)
+	}
+	return getFilenameFromUrl(d.Options.URL)
+}
+
 func (d *Download) GetDestinationPath(useTemp ...bool) string {
 
 	// Default to false if no value provided
@@ -50,10 +58,12 @@ func (d *Download) GetDestinationPath(useTemp ...bool) string {
 		isTemp = useTemp[0]
 	}
 
+	name := d.destinationName()
+
 	// If useTemp is true, use the temp directory
 	if isTemp {
 		// If output file is not specified, use the default temp directory
-		return filepath.Join(d.TempDir, getFilenameFromUrl(d.Options.URL))
+		return filepath.Join(d.TempDir, name)
 	}
 
 	// If output file is specified, use it
@@ -64,13 +74,51 @@ func (d *Download) GetDestinationPath(useTemp ...bool) string {
 	// If no output file is specified, download to current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		return getFilenameFromUrl(d.Options.URL)
+		return name
 	}
-	return filepath.Join(cwd, getFilenameFromUrl(d.Options.URL))
+	return filepath.Join(cwd, name)
+}
+
+func (d *Download) cloneFromUrl(useTemp ...bool) int64 {
+	logger := GetLogger()
+
+	dest := d.GetDestinationPath(useTemp...)
+	logger.Info("Cloning to: ", dest)
+
+	if _, err := os.Stat(dest); err == nil {
+		if d.Options.Force {
+			RemoveDownloadedFile(dest)
+		} else {
+			logger.Info("Destination already exists: ", dest)
+			return 0
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		logger.WithError(err).Info("Error creating directory structure")
+		return 0
+	}
+
+	cmd := exec.Command("git", "clone", d.Options.URL, dest)
+	if !d.Options.ShowProgress {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+
+	if err := cmd.Run(); err != nil {
+		logger.WithError(err).Info("Error while cloning", d.Options.URL)
+		return 0
+	}
+
+	return 1
 }
 
 func (d *Download) downloadFromUrl(useTemp ...bool) int64 {
 	logger := GetLogger()
+
+	if isGitRepoUrl(d.Options.URL) {
+		return d.cloneFromUrl(useTemp...)
+	}
 
 	// Check file existence first
 	fileName := d.GetDestinationPath(useTemp...)

@@ -100,8 +100,17 @@ func RemoveIfExists(destination string) error {
 }
 
 func getFilenameFromUrl(url string) string {
+	url = strings.TrimRight(url, "/")
 	tokens := strings.Split(url, "/")
 	return tokens[len(tokens)-1]
+}
+
+func isGitRepoUrl(url string) bool {
+	return strings.HasSuffix(strings.TrimRight(url, "/"), ".git")
+}
+
+func getRepoNameFromUrl(url string) string {
+	return strings.TrimSuffix(getFilenameFromUrl(url), ".git")
 }
 
 func ConfirmExecution() bool {
