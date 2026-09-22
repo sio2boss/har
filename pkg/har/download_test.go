@@ -107,6 +107,133 @@ func TestCloneFromUrl(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestCleanupRemovesOnlyTempDir(t *testing.T) {
+	d, err := NewDownload("http://example.com/a.zip", "", false, nil, false)
+	assert.NoError(t, err)
+
+	temp := d.TempDir
+	assert.NoError(t, os.WriteFile(filepath.Join(temp, "file.txt"), []byte("x"), 0644))
+
+	sibling, err := os.MkdirTemp(filepath.Dir(temp), "sibling")
+	assert.NoError(t, err)
+	t.Cleanup(func() { _ = os.RemoveAll(sibling) })
+
+	d.Cleanup()
+
+	_, err = os.Stat(temp)
+	assert.True(t, os.IsNotExist(err))
+	_, err = os.Stat(sibling)
+	assert.NoError(t, err)
+}
+
+func TestTrashPathRefusesSensitiveLocations(t *testing.T) {
+	orig := moveToTrash
+	moveToTrash = func(paths ...string) error {
+		t.Fatalf("trash called for %v", paths)
+		return nil
+	}
+	t.Cleanup(func() { moveToTrash = orig })
+
+	assert.Error(t, trashPath(""))
+	assert.Error(t, trashPath("."))
+	assert.Error(t, trashPath(string(filepath.Separator)))
+
+	home, err := os.UserHomeDir()
+	assert.NoError(t, err)
+	assert.Error(t, trashPath(home))
+
+	cwd, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.Error(t, trashPath(cwd))
+	assert.Error(t, trashPath(firstPathElement(t, t.TempDir())))
+	assert.Error(t, trashPath(relativePathToRoot(t)))
+}
+
+func TestTrashPathRefusesSymlink(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "target")
+	assert.NoError(t, os.WriteFile(target, []byte("x"), 0644))
+	link := filepath.Join(dir, "link")
+	assert.NoError(t, os.Symlink(target, link))
+
+	orig := moveToTrash
+	moveToTrash = func(paths ...string) error {
+		t.Fatalf("trash called for %v", paths)
+		return nil
+	}
+	t.Cleanup(func() { moveToTrash = orig })
+
+	assert.Error(t, trashPath(link))
+	_, err := os.Stat(target)
+	assert.NoError(t, err)
+}
+
+func TestCloneForceTrashesExactDestination(t *testing.T) {
+	parent := t.TempDir()
+	dest := filepath.Join(parent, "cloned")
+	assert.NoError(t, os.MkdirAll(dest, 0755))
+	marker := filepath.Join(dest, "keep.txt")
+	assert.NoError(t, os.WriteFile(marker, []byte("x"), 0644))
+	sibling := filepath.Join(parent, "sibling.txt")
+	assert.NoError(t, os.WriteFile(sibling, []byte("y"), 0644))
+
+	var got []string
+	orig := moveToTrash
+	moveToTrash = func(paths ...string) error {
+		got = append(got, paths...)
+		return nil
+	}
+	t.Cleanup(func() { moveToTrash = orig })
+
+	d, err := NewDownload(filepath.Join(parent, "missing.git"), dest, true, nil, true)
+	assert.NoError(t, err)
+	t.Cleanup(d.Cleanup)
+
+	n := d.cloneFromUrl(false)
+	assert.Equal(t, int64(0), n)
+
+	want, err := filepath.Abs(dest)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{filepath.Clean(want)}, got)
+	_, err = os.Stat(marker)
+	assert.NoError(t, err)
+	_, err = os.Stat(sibling)
+	assert.NoError(t, err)
+}
+
+func firstPathElement(t *testing.T, path string) string {
+	t.Helper()
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	abs = filepath.Clean(abs)
+	for {
+		parent := filepath.Dir(abs)
+		if parent == abs || isFilesystemRoot(parent) {
+			return abs
+		}
+		abs = parent
+	}
+}
+
+func relativePathToRoot(t *testing.T) string {
+	t.Helper()
+	rel := "."
+	for i := 0; i < 64; i++ {
+		abs, err := filepath.Abs(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isFilesystemRoot(filepath.Clean(abs)) {
+			return rel
+		}
+		rel = filepath.Join(rel, "..")
+	}
+	t.Fatal("did not reach filesystem root")
+	return ""
+}
+
 func TestDownloadWithSHA1(t *testing.T) {
 	// Create a test server with known content
 	testContent := "test file content"

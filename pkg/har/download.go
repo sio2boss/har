@@ -40,7 +40,9 @@ func NewDownload(url string, outputFile string, showProgress bool, sha interface
 }
 
 func (d *Download) Cleanup() {
-	RemoveDownloadedFile(d.TempDir)
+	if err := removeOwnedTempDir(d.TempDir); err != nil {
+		GetLogger().WithError(err).Info("failed to remove temp directory")
+	}
 }
 
 func (d *Download) destinationName() string {
@@ -86,10 +88,12 @@ func (d *Download) cloneFromUrl(useTemp ...bool) int64 {
 	logger.Info("Cloning to: ", dest)
 
 	if _, err := os.Stat(dest); err == nil {
-		if d.Options.Force {
-			RemoveDownloadedFile(dest)
-		} else {
+		if !d.Options.Force {
 			logger.Info("Destination already exists: ", dest)
+			return 0
+		}
+		if err := trashPath(dest); err != nil {
+			logger.WithError(err).Info("refusing to replace destination ", dest)
 			return 0
 		}
 	}

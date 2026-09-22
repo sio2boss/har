@@ -5,6 +5,7 @@ go 1.27.0
 toolchain go1.27.1
 
 require (
+	github.com/Bios-Marcel/wastebasket/v2 v2.0.3
 	github.com/cheggaaa/pb/v3 v3.2.1
 	github.com/cookiengineer/gozim v0.1.2
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
@@ -17,9 +18,11 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 )
