@@ -19,6 +19,7 @@ brew install sio2boss/tap/har
 | g    | Just Download                                        |
 | x    | Download and extract                                 |
 | c    | Create binary installer from directory, use with 'b' |
+| z    | Crawl a site and pack it as a Kiwix `.zim` archive   |
 
 
 ## Usage
@@ -30,6 +31,7 @@ Usage:
   har (g|get)     [-y] [-s] [--sha1=<sum>] URL [-O FILE]
   har (x|extract) [-s] [--sha1=<sum>] URL [-C DIR]
   har (c|create)  DIR [-O FILE]
+  har (z|zim) [--max-depth=<n>] [--turbo] URL [-O FILE]
   har -h | --help
   har --version
 ```
@@ -48,6 +50,15 @@ example usage:
 or if you dont want to automatically extract (basically curl/wget but to a file):
 
     har g http://ftp.gnu.org/gnu/wget/wget2-2.0.0.tar.gz
+
+### Pack a site as ZIM
+
+Crawl a site (wget-style depth + page requisites) and write a Kiwix-readable `.zim`:
+
+    har zim --max-depth=1 http://example.com/ -O example.zim
+    har zim --turbo --max-depth=0 https://example.com/article -O article.zim
+
+Optional: [ImageMagick](https://imagemagick.org/) (`magick`, or the older `convert`). Har uses it to turn the site favicon into the 48×48 illustration Kiwix expects. Without it, har resizes the icon itself, or writes a plain icon when the crawl did not save a favicon.
 
 ### Install Stuff
 
@@ -73,3 +84,19 @@ for the run a script style:
 go install gotest.tools/gotestsum@latest
 gotestsum --format-icons hivis --format testname --hide-summary=all --watch
 ```
+
+### Release
+
+`make release` cross-compiles with [gox](https://github.com/mitchellh/gox). Install it once:
+
+```
+go install github.com/mitchellh/gox@latest
+```
+
+Then build into `release/`. Each binary there is packed as a `tar.gz`.
+
+```
+make release
+```
+
+Pushing a `v*` tag runs that same target in GitHub Actions and uploads the artifacts.

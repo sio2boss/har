@@ -11,7 +11,7 @@ Usage:\n\
     tests \n\
 \n\
 This command just runs:\n\
-    gotestsum --format-icons hivis  --format testname --hide-summary=all --watch\n\
+    gotestsum --format-icons hivis  --format testname --hide-summary=all [--watch]\n\
 \n"
 
 # Import system path
@@ -19,6 +19,6 @@ avAppendSystemPath
 
 #### Put system commands here
 
-cd $AV_ROOT/.. && gotestsum --format-icons hivis  --format testname --hide-summary=all --watch
+cd $AV_ROOT/.. && gotestsum --format-icons hivis  --format testname --hide-summary=all $2
 
 #### End commands

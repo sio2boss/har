@@ -22,6 +22,19 @@ func HandleGet(d *Download) error {
 
 func HandleExtract(d *Download, outputPath string) error {
 	logger := GetLogger()
+
+	// Git repos: clone directly to the output path (or cwd)
+	if isGitRepoUrl(d.Options.URL) {
+		if outputPath != "" {
+			d.Options.OutputFile = outputPath
+		}
+		if d.downloadFromUrl(false) < 1 {
+			logger.Error("clone failed")
+			return nil
+		}
+		return nil
+	}
+
 	if d.downloadFromUrl(true) < 1 {
 		logger.Error("download failed")
 		return nil
@@ -98,6 +111,11 @@ func HandleInstall(d *Download, shell string, assumeYes bool) error {
 	logger := GetLogger()
 	url := d.Options.URL
 
+	if isGitRepoUrl(url) {
+		logger.Error("install does not support git repositories; use get or extract instead")
+		return nil
+	}
+
 	// Check if URL is an archive
 	filename := getFilenameFromUrl(url)
 	isArchiveFile := isArchive(filename)
@@ -151,55 +169,7 @@ func HandleInstall(d *Download, shell string, assumeYes bool) error {
 			return nil
 		}
 
-		// Check for install.sh or setup.sh
-		var installScript string
-		installShPath := filepath.Join(installDir, "install.sh")
-		setupShPath := filepath.Join(installDir, "setup.sh")
-
-		if info, err := os.Stat(installShPath); err == nil && !info.IsDir() {
-			installScript = installShPath
-		} else if info, err := os.Stat(setupShPath); err == nil && !info.IsDir() {
-			installScript = setupShPath
-		} else {
-			logger.Error("no install.sh or setup.sh found in " + installDir)
-			return nil
-		}
-
-		// Make script executable
-		if err := os.Chmod(installScript, 0755); err != nil {
-			logger.WithError(err).Error("failed to make script executable")
-			return nil
-		}
-
-		if !assumeYes {
-			if !ConfirmExecution() {
-				return nil
-			}
-		}
-
-		// Get just the script filename since we'll execute from the install directory
-		scriptName := filepath.Base(installScript)
-
-		if !d.Options.ShowProgress {
-			logger.Info("Running: './" + scriptName + "' in " + installDir)
-		}
-
-		// Execute the script from the install directory - the OS will handle the shebang
-		cmd := exec.Command("./" + scriptName)
-		cmd.Dir = installDir
-		if !d.Options.ShowProgress {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-		}
-
-		err = cmd.Run()
-		if err != nil {
-			logger.WithError(err).Error("failed to run install script")
-			return nil
-		}
-
-		logger.Debug("install script ran successfully")
-		return nil
+		return runInstallScript(d, installDir, assumeYes)
 	}
 
 	// Not an archive, run as script
@@ -226,6 +196,60 @@ func HandleInstall(d *Download, shell string, assumeYes bool) error {
 	}
 
 	logger.Debug("command ran successfully")
+	return nil
+}
+
+func runInstallScript(d *Download, installDir string, assumeYes bool) error {
+	logger := GetLogger()
+
+	// Check for install.sh or setup.sh
+	var installScript string
+	installShPath := filepath.Join(installDir, "install.sh")
+	setupShPath := filepath.Join(installDir, "setup.sh")
+
+	if info, err := os.Stat(installShPath); err == nil && !info.IsDir() {
+		installScript = installShPath
+	} else if info, err := os.Stat(setupShPath); err == nil && !info.IsDir() {
+		installScript = setupShPath
+	} else {
+		logger.Error("no install.sh or setup.sh found in " + installDir)
+		return nil
+	}
+
+	// Make script executable
+	if err := os.Chmod(installScript, 0755); err != nil {
+		logger.WithError(err).Error("failed to make script executable")
+		return nil
+	}
+
+	if !assumeYes {
+		if !ConfirmExecution() {
+			return nil
+		}
+	}
+
+	// Get just the script filename since we'll execute from the install directory
+	scriptName := filepath.Base(installScript)
+
+	if !d.Options.ShowProgress {
+		logger.Info("Running: './" + scriptName + "' in " + installDir)
+	}
+
+	// Execute the script from the install directory - the OS will handle the shebang
+	cmd := exec.Command("./" + scriptName)
+	cmd.Dir = installDir
+	if !d.Options.ShowProgress {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+
+	err := cmd.Run()
+	if err != nil {
+		logger.WithError(err).Error("failed to run install script")
+		return nil
+	}
+
+	logger.Debug("install script ran successfully")
 	return nil
 }
 

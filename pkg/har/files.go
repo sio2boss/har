@@ -8,7 +8,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"github.com/Bios-Marcel/wastebasket/v2"
 )
 
 func getSystemCommandFromFilename(filename string) (string, string) {
@@ -86,10 +89,94 @@ func ExtractDownloadedFile(filename string, outputPath string, show bool) {
 	}
 }
 
-func RemoveDownloadedFile(filename string) {
-	// TODO: We need to prevent full disk deletes here
-	cmd := exec.Command("rm", "-rf", filename)
-	cmd.Run()
+// moveToTrash is wastebasket.Trash, replaced in tests so they never touch the real Trash.
+var moveToTrash = wastebasket.Trash
+
+// removeOwnedTempDir deletes dir only when it is still a har temp directory
+// created under os.TempDir.
+func removeOwnedTempDir(dir string) error {
+	if dir == "" {
+		return fmt.Errorf("refusing to remove an empty temp directory")
+	}
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	abs = filepath.Clean(abs)
+
+	tempRoot, err := filepath.Abs(os.TempDir())
+	if err != nil {
+		return err
+	}
+	tempRoot = filepath.Clean(tempRoot)
+	rel, err := filepath.Rel(tempRoot, abs)
+	if err != nil {
+		return err
+	}
+	if rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+		return fmt.Errorf("refusing to remove temp directory outside %s: %s", tempRoot, abs)
+	}
+	if !strings.HasPrefix(filepath.Base(abs), "har") {
+		return fmt.Errorf("refusing to remove temp directory %s", abs)
+	}
+	return os.RemoveAll(abs)
+}
+
+// trashPath moves path to the OS trash when it is exactly one non-sensitive location.
+func trashPath(path string) error {
+	if path == "" || path == "." {
+		return fmt.Errorf("refusing to trash %q", path)
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	abs = filepath.Clean(abs)
+	if err := refuseSensitivePath(abs); err != nil {
+		return err
+	}
+
+	info, err := os.Lstat(abs)
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("refusing to trash symlink %s", abs)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return err
+	}
+	if err := refuseSensitivePath(filepath.Clean(resolved)); err != nil {
+		return err
+	}
+	return moveToTrash(abs)
+}
+
+func refuseSensitivePath(path string) error {
+	cleaned := filepath.Clean(path)
+	if cleaned == "" || cleaned == "." || isFilesystemRoot(cleaned) {
+		return fmt.Errorf("refusing to trash filesystem root %s", cleaned)
+	}
+	if isFilesystemRoot(filepath.Dir(cleaned)) {
+		return fmt.Errorf("refusing to trash top-level path %s", cleaned)
+	}
+	if home, err := os.UserHomeDir(); err == nil && cleaned == filepath.Clean(home) {
+		return fmt.Errorf("refusing to trash home directory %s", cleaned)
+	}
+	if cwd, err := os.Getwd(); err == nil && cleaned == filepath.Clean(cwd) {
+		return fmt.Errorf("refusing to trash current directory %s", cleaned)
+	}
+	return nil
+}
+
+func isFilesystemRoot(path string) bool {
+	cleaned := filepath.Clean(path)
+	if cleaned == string(filepath.Separator) {
+		return true
+	}
+	volume := filepath.VolumeName(cleaned)
+	return volume != "" && (cleaned == volume || cleaned == volume+string(filepath.Separator))
 }
 
 func RemoveIfExists(destination string) error {
@@ -100,8 +187,17 @@ func RemoveIfExists(destination string) error {
 }
 
 func getFilenameFromUrl(url string) string {
+	url = strings.TrimRight(url, "/")
 	tokens := strings.Split(url, "/")
 	return tokens[len(tokens)-1]
+}
+
+func isGitRepoUrl(url string) bool {
+	return strings.HasSuffix(strings.TrimRight(url, "/"), ".git")
+}
+
+func getRepoNameFromUrl(url string) string {
+	return strings.TrimSuffix(getFilenameFromUrl(url), ".git")
 }
 
 func ConfirmExecution() bool {
