@@ -12,10 +12,10 @@ cd "$TEMP_DIR"
 echo "Downloading release assets..."
 
 # Download the release assets
-curl -L -o "har-${VERSION}-apple-amd64.tar.gz" \
-  "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-apple-amd64.tar.gz"
-curl -L -o "har-${VERSION}-apple-arm64.tar.gz" \
-  "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-apple-arm64.tar.gz"
+curl -L -o "har-${VERSION}-darwin-amd64.tar.gz" \
+  "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-darwin-amd64.tar.gz"
+curl -L -o "har-${VERSION}-darwin-arm64.tar.gz" \
+  "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-darwin-arm64.tar.gz"
 curl -L -o "har-${VERSION}-linux-amd64.tar.gz" \
   "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-linux-amd64.tar.gz"
 curl -L -o "har-${VERSION}-linux-arm64.tar.gz" \
@@ -28,13 +28,13 @@ sha256sum *.tar.gz > checksums.txt
 cat checksums.txt
 
 # Extract checksums
-APPLE_AMD64_SHA=$(grep "apple-amd64" checksums.txt | cut -d' ' -f1)
-APPLE_ARM64_SHA=$(grep "apple-arm64" checksums.txt | cut -d' ' -f1)
+DARWIN_AMD64_SHA=$(grep "darwin-amd64" checksums.txt | cut -d' ' -f1)
+DARWIN_ARM64_SHA=$(grep "darwin-arm64" checksums.txt | cut -d' ' -f1)
 LINUX_AMD64_SHA=$(grep "linux-amd64" checksums.txt | cut -d' ' -f1)
 LINUX_ARM64_SHA=$(grep "linux-arm64" checksums.txt | cut -d' ' -f1)
 
-echo "Apple AMD64 SHA256: $APPLE_AMD64_SHA"
-echo "Apple ARM64 SHA256: $APPLE_ARM64_SHA"
+echo "Apple AMD64 SHA256: $DARWIN_AMD64_SHA"
+echo "Apple ARM64 SHA256: $DARWIN_ARM64_SHA"
 echo "Linux AMD64 SHA256: $LINUX_AMD64_SHA"
 echo "Linux ARM64 SHA256: $LINUX_ARM64_SHA"
 
@@ -53,11 +53,11 @@ class Har < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-apple-arm64.tar.gz"
-      sha256 "${APPLE_ARM64_SHA}"
+      url "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-darwin-arm64.tar.gz"
+      sha256 "${DARWIN_ARM64_SHA}"
     else
-      url "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-apple-amd64.tar.gz"
-      sha256 "${APPLE_AMD64_SHA}"
+      url "https://github.com/sio2boss/har/releases/download/${VERSION}/har-${VERSION}-darwin-amd64.tar.gz"
+      sha256 "${DARWIN_AMD64_SHA}"
     end
   end
 
